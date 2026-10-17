@@ -1,10 +1,14 @@
-import type { ModalHubState, ModalSnapshot } from './types';
+import type { ModalEvent, ModalHubState, ModalSnapshot, Subscription } from './types';
 
 type Listener = () => void;
+type EventCallback = (data?: any) => void;
+
+const DEFAULT_SNAPSHOT: ModalSnapshot = Object.freeze({ visible: false, data: null });
 
 export class ModalHubStore {
   private state: ModalHubState = { modals: {} };
   private listeners = new Set<Listener>();
+  private events = new Map<string, Set<EventCallback>>();
 
   subscribe(listener: Listener) {
     this.listeners.add(listener);
@@ -18,13 +22,14 @@ export class ModalHubStore {
   }
 
   get(name: string): ModalSnapshot {
-    return this.state.modals[name] || { visible: false, data: null };
+    return this.state.modals[name] || DEFAULT_SNAPSHOT;
   }
 
   async show(name: string, data?: any) {
     const snapshot: ModalSnapshot = { visible: true, data: data ?? null };
     this.state = { modals: { ...this.state.modals, [name]: snapshot } };
     this.listeners.forEach((listener) => listener());
+    await Promise.resolve().then(() => this.emit(`${name}:show`, snapshot.data));
   }
 
   async hide(name: string) {
@@ -33,10 +38,28 @@ export class ModalHubStore {
     const snapshot: ModalSnapshot = { visible: false, data: {} };
     this.state = { modals: { ...this.state.modals, [name]: snapshot } };
     this.listeners.forEach((listener) => listener());
+    await Promise.resolve().then(() => this.emit(`${name}:hide`, snapshot.data));
   }
 
   async hideAll() {
     const names = Object.keys(this.state.modals);
     await Promise.all(names.map((name) => this.hide(name)));
+  }
+
+  on(event: ModalEvent, callback: EventCallback): Subscription {
+    const set = this.events.get(event) ?? new Set<EventCallback>();
+    this.events.set(event, set);
+    set.add(callback);
+    return {
+      destroy: () => {
+        set.delete(callback);
+      },
+    };
+  }
+
+  private emit(event: ModalEvent, data?: any) {
+    const set = this.events.get(event);
+    if (!set) return;
+    Array.from(set).forEach((callback) => callback(data));
   }
 }
