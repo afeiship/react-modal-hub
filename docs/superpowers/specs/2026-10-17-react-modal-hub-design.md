@@ -80,7 +80,7 @@ Provider 外使用 `useModalHub()` 抛出明确错误（`createContext` 默认�
 **边角语义（钉死）**：
 
 - 重复 `show` 已 visible 的 name → 更新 data，重新 emit `{name}:show`
-- `hide` 未出现过的 name → 直接 resolve，不 emit
+- `hide`：仅在 `visible: true → false` 转变时 emit；name 未出现过或已隐藏 → 直接 resolve，不 emit
 - 懒挂载不进 1.0：`ready` 后常驻挂载，退出动画由组件在收到 `visible: false` 后自管（常驻挂载下组件可自行播动画再渲染 null）
 
 ### 2.4 明确砍掉的旧特性
@@ -128,8 +128,8 @@ packages/lib/src/
         │ 1. 不可变更新 modals[name] = { visible: true, data }
         │ 2. notify 订阅者
         ▼
-  useSyncExternalStore → ModalHub 重渲染
-        │ 3. 向已挂载的弹窗组件注入 { name, data, visible }
+  useSyncExternalStore → 每个弹窗 wrapper 按 name 取快照
+        │ 3. 仅目标弹窗重渲染，注入 { name, data, visible }
         ▼
   微任务：emit('{name}:show') → show 的 Promise resolve
         │
@@ -145,7 +145,7 @@ packages/lib/src/
   - `hideAll` 关闭全部
   - `when`：正常 hide 触发 resolve；`destroy()` 后不再 resolve
   - 事件 `on` 触发与 `destroy()` 退订；`{name}:show`/`:hide` 命名
-  - 边角语义：重复 show 重新 emit；hide 未注册 name 直接 resolve 不 emit
+  - 边角语义：重复 show 重新 emit；hide 未注册/已隐藏 name 直接 resolve 不 emit
 - **组件集成测**：
   - `show`/`hide` 触发弹窗组件收到新 `visible`/`data` 并重渲染
   - 渲染隔离：`show('a')` 不引起弹窗 b 重渲染（渲染计数断言）
@@ -160,3 +160,9 @@ packages/lib/src/
 - 零运行时依赖（事件总线、状态管理全部自实现；不使用 `object-path`、`@jswork/event-mitt`、zustand）
 - 包名 `@jswork/react-modal-hub`，description：`One hub to present, dismiss, and sync every React modal.`
 - 只动 `packages/lib`，仓库根配置不动；提交信息英文
+
+## 5. 后续生态（非 1.0）
+
+- `@jswork/vite-plugin-react-modal-hub`（独立仓库，方案 A 已定）：生成 `virtual:react-modal-hub` 虚拟模块，导出 `{ modals, eagerModals }` 组件表，用户 `<ModalHub {...modals}>` 合并进 props；核心 lib 的注册入口不变，spec 不受插件影响
+- store 级 `register` API（虚拟模块副作用注册，方案 B）：不采用，props 保持唯一注册入口
+- 非 eager glob + `React.lazy` 的 bundle 级代码分割、懒挂载（closing 协议）：1.x 展望
