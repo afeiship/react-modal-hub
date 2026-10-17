@@ -47,12 +47,17 @@ export class ModalHubStore {
   }
 
   on(event: ModalEvent, callback: EventCallback): Subscription {
-    const set = this.events.get(event) ?? new Set<EventCallback>();
-    this.events.set(event, set);
+    let set = this.events.get(event);
+    if (!set) {
+      set = new Set<EventCallback>();
+      this.events.set(event, set);
+    }
     set.add(callback);
     return {
       destroy: () => {
-        set.delete(callback);
+        if (set.delete(callback) && set.size === 0 && this.events.get(event) === set) {
+          this.events.delete(event);
+        }
       },
     };
   }
@@ -60,6 +65,12 @@ export class ModalHubStore {
   private emit(event: ModalEvent, data?: any) {
     const set = this.events.get(event);
     if (!set) return;
-    Array.from(set).forEach((callback) => callback(data));
+    Array.from(set).forEach((callback) => {
+      try {
+        callback(data);
+      } catch (err) {
+        console.error(`[react-modal-hub] Error in listener for "${event}":`, err);
+      }
+    });
   }
 }

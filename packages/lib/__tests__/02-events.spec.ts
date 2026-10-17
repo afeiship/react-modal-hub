@@ -1,4 +1,5 @@
 import { ModalHubStore } from '../src/store';
+import { vi } from 'vitest';
 
 describe('ModalHubStore events', () => {
   let hub: ModalHubStore;
@@ -59,5 +60,65 @@ describe('ModalHubStore events', () => {
     sub.destroy();
     await hub.show('login');
     expect(count).toBe(0);
+  });
+
+  it('destroying one listener leaves others working', async () => {
+    const calls: string[] = [];
+    const first = hub.on('login:show', () => calls.push('first'));
+    hub.on('login:show', () => calls.push('second'));
+
+    first.destroy();
+    await hub.show('login');
+    expect(calls).toEqual(['second']);
+  });
+
+  it('a listener destroying itself during invocation does not break iteration', async () => {
+    const calls: string[] = [];
+    const self = hub.on('login:show', () => {
+      calls.push('self');
+      self.destroy();
+    });
+    hub.on('login:show', () => calls.push('after'));
+
+    await hub.show('login');
+    expect(calls).toEqual(['self', 'after']);
+  });
+
+  it('a throwing listener does not prevent later listeners or reject show()', async () => {
+    const calls: string[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    hub.on('login:show', () => {
+      throw new Error('boom');
+    });
+    hub.on('login:show', () => calls.push('after'));
+
+    await expect(hub.show('login')).resolves.toBeUndefined();
+    expect(calls).toEqual(['after']);
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('removes the event key when the last listener is destroyed', async () => {
+    const sub = hub.on('login:show', () => {});
+    sub.destroy();
+    const events = (hub as unknown as { events: Map<string, Set<unknown>> }).events;
+    expect(events.has('login:show')).toBe(false);
+
+    // destroying again must not resurrect or corrupt the map
+    sub.destroy();
+    expect(events.has('login:show')).toBe(false);
+  });
+
+  it('destroying a stale subscription does not delete a newer listener set', async () => {
+    const calls: string[] = [];
+    const stale = hub.on('login:show', () => calls.push('stale'));
+    stale.destroy();
+    stale.destroy();
+
+    hub.on('login:show', () => calls.push('fresh'));
+    stale.destroy(); // stale handle must not remove the new set
+
+    await hub.show('login');
+    expect(calls).toEqual(['fresh']);
   });
 });
