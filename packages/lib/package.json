@@ -13,7 +13,6 @@
   ],
   "scripts": {
     "build": "tsup",
-    "postbuild": "postsass -s src/style.scss -d dist/style.css -c",
     "test": "vitest run",
     "test:watch": "vitest",
     "release": "release-it"
@@ -29,7 +28,6 @@
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.16",
     "classnames": "^2.5.1",
-    "cssnano": "^6.0.1",
     "jsdom": "^29.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
