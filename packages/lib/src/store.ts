@@ -62,6 +62,18 @@ export class ModalHubStore {
     };
   }
 
+  when(name: string): Promise<void> & Subscription {
+    let destroy: () => void = () => {};
+    const promise = new Promise<void>((resolve) => {
+      const sub = this.on(`${name}:hide`, () => {
+        sub.destroy();
+        resolve();
+      });
+      destroy = sub.destroy;
+    });
+    return Object.assign(promise, { destroy: () => destroy() });
+  }
+
   private emit(event: ModalEvent, data?: any) {
     const set = this.events.get(event);
     if (!set) return;
