@@ -1,32 +1,45 @@
-// import noop from '@jswork/noop';
 import cx from 'classnames';
-import { ReactNode, Component, HTMLAttributes } from "react";
+import { useSyncExternalStore, type ComponentType } from 'react';
+import { ModalContext } from './context';
+import { modalHub } from './store';
+import type { ModalComponentProps, ModalHubProps } from './types';
 
-const CLASS_NAME = "react-modal-hub";
-// const uuid = () => Math.random().toString(36).substring(2, 9);
-export type ReactModalHubProps = {
-  /**
-   * The extended className for component.
-   * @default ''
-   */
-  className?: string;
-  /**
-   * The children element.
-   */
-  children?: ReactNode;
-} & HTMLAttributes<HTMLDivElement>;
+const CLASS_NAME = 'react-modal-hub';
 
-export default class ReactModalHub extends Component<ReactModalHubProps> {
-  static displayName = CLASS_NAME;
-  static version = "__VERSION__";
-  static defaultProps = {};
+const ModalHub = ({
+  modals = {},
+  eagerModals = {},
+  ready = true,
+  className,
+  children,
+  ...rest
+}: ModalHubProps) => {
+  useSyncExternalStore(
+    (onChange) => modalHub.subscribe(onChange),
+    () => modalHub.getSnapshot()
+  );
+  const eagerEntries = Object.entries(eagerModals);
+  const modalEntries = ready ? Object.entries(modals) : [];
 
-  render() {
-    const { className, children,...rest } = this.props;
-    return (
+  const renderItem = (name: string, Component: ComponentType<ModalComponentProps>) => {
+    const snapshot = modalHub.get(name);
+    return <Component key={name} name={name} data={snapshot.data} visible={snapshot.visible} />;
+  };
+
+  return (
+    <ModalContext.Provider value={modalHub}>
       <div data-component={CLASS_NAME} className={cx(CLASS_NAME, className)} {...rest}>
         {children}
+        {eagerEntries.map(([name, Component]) => renderItem(name, Component))}
+        {modalEntries.map(([name, Component]) => renderItem(name, Component))}
       </div>
-    );
-  }
-}
+    </ModalContext.Provider>
+  );
+};
+
+ModalHub.displayName = CLASS_NAME;
+
+export default ModalHub;
+export { useModalHub } from './context';
+export { modalHub, ModalHubStore } from './store';
+export type * from './types';
