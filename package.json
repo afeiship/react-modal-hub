@@ -1,5 +1,19 @@
 {
-  "name": "rails-module-commentable",
+  "name": "@jswork/react-modal-hub",
+  "version": "1.0.0",
+  "description": "One hub to present, dismiss, and sync every React modal.",
+  "homepage": "https://js.work",
+  "type": "module",
   "private": true,
-  "dependencies": {}
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter example dev",
+    "docs": "node scripts/markdown.js",
+    "pre:build": "pnpm run docs",
+    "test": "pnpm --filter @jswork/react-modal-hub test",
+    "build": "pnpm --filter @jswork/react-modal-hub build",
+    "publish": "pnpm --filter @jswork/react-modal-hub release"
+  }
 }
