@@ -86,3 +86,16 @@ export class ModalHubStore {
     });
   }
 }
+
+declare global {
+  interface NxStatic {
+    $modal?: ModalHubStore;
+  }
+}
+
+export const modalHub = new ModalHubStore();
+
+const globalRef = globalThis as typeof globalThis & { nx?: NxStatic };
+if (globalRef.nx) {
+  globalRef.nx.$modal = modalHub;
+}
