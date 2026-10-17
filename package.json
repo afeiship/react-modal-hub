@@ -10,8 +10,6 @@
   ],
   "scripts": {
     "dev": "pnpm --filter example dev",
-    "docs": "node scripts/markdown.js",
-    "pre:build": "pnpm run docs",
     "test": "pnpm --filter @jswork/react-modal-hub test",
     "build": "pnpm --filter @jswork/react-modal-hub build",
     "publish": "pnpm --filter @jswork/react-modal-hub release"
