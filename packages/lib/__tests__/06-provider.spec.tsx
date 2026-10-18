@@ -19,9 +19,9 @@ describe('ModalHub provider', () => {
     expect(container.firstChild).toBe(screen.getByText('hello'));
   });
 
-  it('mounts modals only when ready; eagerModals always mount', () => {
+  it('mounts modals only when ready; modalsEager always mount', () => {
     const ui = (ready: boolean) => (
-      <ModalHub ready={ready} modals={{ login: Login }} eagerModals={{ toast: Toast }}>
+      <ModalHub ready={ready} modals={{ login: Login }} modalsEager={{ toast: Toast }}>
         x
       </ModalHub>
     );

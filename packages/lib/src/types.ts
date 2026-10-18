@@ -33,7 +33,7 @@ export type ModalHubProps = {
    * Modals always mounted regardless of ready.
    * @default {}
    */
-  eagerModals?: Record<string, ModalComponent>;
+  modalsEager?: Record<string, ModalComponent>;
   /**
    * Controls whether modals are mounted.
    * @default true

@@ -5,7 +5,7 @@ import type { ModalComponentProps, ModalHubProps } from './types';
 
 const ModalHub = ({
   modals = {},
-  eagerModals = {},
+  modalsEager = {},
   ready = true,
   children,
 }: ModalHubProps) => {
@@ -13,7 +13,7 @@ const ModalHub = ({
     (onChange) => modalHub.subscribe(onChange),
     () => modalHub.getSnapshot()
   );
-  const eagerEntries = Object.entries(eagerModals);
+  const eagerEntries = Object.entries(modalsEager);
   const modalEntries = ready ? Object.entries(modals) : [];
 
   const renderItem = (name: string, Component: ComponentType<ModalComponentProps>) => {
