@@ -13,10 +13,10 @@ const Toast = ({ visible }: ModalComponentProps) => (
 );
 
 describe('ModalHub provider', () => {
-  it('renders children inside the container', () => {
-    const { container } = render(<ModalHub>hello</ModalHub>);
-    expect(container.querySelector('[data-component="react-modal-hub"]')).toBeInTheDocument();
+  it('renders children directly without container tag', () => {
+    const { container } = render(<ModalHub><span>hello</span></ModalHub>);
     expect(screen.getByText('hello')).toBeInTheDocument();
+    expect(container.firstChild).toBe(screen.getByText('hello'));
   });
 
   it('mounts modals only when ready; eagerModals always mount', () => {

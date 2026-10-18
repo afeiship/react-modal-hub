@@ -1,18 +1,13 @@
-import cx from 'classnames';
 import { useSyncExternalStore, type ComponentType } from 'react';
 import { ModalContext } from './context';
 import { modalHub } from './store';
 import type { ModalComponentProps, ModalHubProps } from './types';
 
-const CLASS_NAME = 'react-modal-hub';
-
 const ModalHub = ({
   modals = {},
   eagerModals = {},
   ready = true,
-  className,
   children,
-  ...rest
 }: ModalHubProps) => {
   useSyncExternalStore(
     (onChange) => modalHub.subscribe(onChange),
@@ -28,16 +23,14 @@ const ModalHub = ({
 
   return (
     <ModalContext.Provider value={modalHub}>
-      <div data-component={CLASS_NAME} className={cx(CLASS_NAME, className)} {...rest}>
-        {children}
-        {eagerEntries.map(([name, Component]) => renderItem(name, Component))}
-        {modalEntries.map(([name, Component]) => renderItem(name, Component))}
-      </div>
+      {children}
+      {eagerEntries.map(([name, Component]) => renderItem(name, Component))}
+      {modalEntries.map(([name, Component]) => renderItem(name, Component))}
     </ModalContext.Provider>
   );
 };
 
-ModalHub.displayName = CLASS_NAME;
+ModalHub.displayName = 'ModalHub';
 
 export default ModalHub;
 export { useModalHub } from './context';

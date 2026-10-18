@@ -1,4 +1,4 @@
-import type { ComponentType, HTMLAttributes, ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 export type ModalSnapshot = {
   visible: boolean;
@@ -40,12 +40,7 @@ export type ModalHubProps = {
    */
   ready?: boolean;
   /**
-   * The extended className for container.
-   * @default ''
-   */
-  className?: string;
-  /**
    * The children element.
    */
   children?: ReactNode;
-} & HTMLAttributes<HTMLDivElement>;
+};
