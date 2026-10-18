@@ -27,16 +27,23 @@ const Probe = () => {
 
 describe('useModalHub', () => {
   it('throws a clear error outside the provider', () => {
+    const suppressError = (e: Event) => e.preventDefault();
+    window.addEventListener('error', suppressError);
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    render(
-      <CatchError>
-        <Probe />
-      </CatchError>
-    );
-    expect(screen.getByTestId('error-msg')).toHaveTextContent(
-      '[react-modal-hub] useModalHub must be used inside <ModalHub>.'
-    );
-    spy.mockRestore();
+
+    try {
+      render(
+        <CatchError>
+          <Probe />
+        </CatchError>
+      );
+      expect(screen.getByTestId('error-msg')).toHaveTextContent(
+        '[react-modal-hub] useModalHub must be used inside <ModalHub>.'
+      );
+    } finally {
+      window.removeEventListener('error', suppressError);
+      spy.mockRestore();
+    }
   });
 
   it('returns the singleton instance inside the provider', () => {
