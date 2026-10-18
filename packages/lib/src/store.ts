@@ -89,7 +89,7 @@ export class ModalHubStore {
 
 declare global {
   interface NxStatic {
-    $modal?: ModalHubStore;
+    $modal: ModalHubStore;
   }
 }
 
