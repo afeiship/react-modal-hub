@@ -9,13 +9,8 @@ export type ModalHubState = {
   modals: Record<string, ModalSnapshot>;
 };
 
-export type ModalComponentProps = {
-  name: string;
-  data: any;
-  visible: boolean;
-};
-
-export type ModalComponent = ComponentType<ModalComponentProps>;
+// 弹窗组件不接收注入 props，自行通过 nx.$modal.get(name) 读取状态
+export type ModalComponent = ComponentType<any>;
 
 export type Subscription = {
   destroy: () => void;

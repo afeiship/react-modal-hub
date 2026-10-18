@@ -73,7 +73,7 @@ Provider 外使用 `useModalHub()` 抛出明确错误（`createContext` 默认�
 | `ready` | `boolean` | `true` | 控制 `modals` 的渲染时机（异步资源就绪场景） |
 | `className` / 其余 `HTMLAttributes` | — | — | 透传到容器 div |
 
-弹窗组件收到的 props：`{ name: string, data: any, visible: boolean }`（wrapper 从 store 快照注入，组件内部据此渲染 `null` 或内容）。
+弹窗组件**不接收注入 props**（实际业务组件多为无 props 的默认导出，自行 `nx.$modal.get(name)` 读状态并据此渲染 `null` 或内容）；wrapper 只负责按 name 订阅快照并触发组件重渲染。
 
 **渲染隔离（1.0）**：任意一次 `show/hide` 不得触发全部弹窗重渲染。每个弹窗由 wrapper 包 `memo`，内部用 `useSyncExternalStore` + selector 只订阅自己 name 的快照 `{ visible, data }`；该 name 快照引用不变则跳过渲染。`show('login')` 只更新 login 一个弹窗。
 
@@ -128,8 +128,8 @@ packages/lib/src/
         │ 1. 不可变更新 modals[name] = { visible: true, data }
         │ 2. notify 订阅者
         ▼
-  useSyncExternalStore → 每个弹窗 wrapper 按 name 取快照
-        │ 3. 仅目标弹窗重渲染，注入 { name, data, visible }
+  useSyncExternalStore → 每个弹窗 wrapper 按 name 订阅快照
+        │ 3. 仅目标弹窗 wrapper 重渲染，组件重新 get() 读取最新状态
         ▼
   微任务：emit('{name}:show') → show 的 Promise resolve
         │
@@ -147,7 +147,7 @@ packages/lib/src/
   - 事件 `on` 触发与 `destroy()` 退订；`{name}:show`/`:hide` 命名
   - 边角语义：重复 show 重新 emit；hide 未注册/已隐藏 name 直接 resolve 不 emit
 - **组件集成测**：
-  - `show`/`hide` 触发弹窗组件收到新 `visible`/`data` 并重渲染
+  - `show`/`hide` 触发目标弹窗重渲染，组件内部 `get()` 读到新 `visible`/`data`
   - 渲染隔离：`show('a')` 不引起弹窗 b 重渲染（渲染计数断言）
   - `ready={false}` 时不挂载 `modals`，`eagerModals` 始终挂载
   - Provider 外调用 `useModalHub` 抛错

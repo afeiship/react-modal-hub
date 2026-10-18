@@ -2,15 +2,17 @@ import { act, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ModalHub from '../src';
 import { modalHub } from '../src/store';
-import type { ModalComponentProps } from '../src/types';
 
-const Login = ({ visible }: ModalComponentProps) => (
-  <div data-testid="login">{visible ? 'login-on' : 'login-off'}</div>
-);
+// 真实使用场景：弹窗组件不接收注入 props，自行读取 store
+const Login = () => {
+  const { visible } = modalHub.get('login');
+  return <div data-testid="login">{visible ? 'login-on' : 'login-off'}</div>;
+};
 
-const Toast = ({ visible }: ModalComponentProps) => (
-  <div data-testid="toast">{visible ? 'toast-on' : 'toast-off'}</div>
-);
+const Toast = () => {
+  const { visible } = modalHub.get('toast');
+  return <div data-testid="toast">{visible ? 'toast-on' : 'toast-off'}</div>;
+};
 
 describe('ModalHub provider', () => {
   it('renders children directly without container tag', () => {
@@ -33,7 +35,7 @@ describe('ModalHub provider', () => {
     expect(screen.getByTestId('login')).toHaveTextContent('login-off');
   });
 
-  it('drives visibility and data from the store', async () => {
+  it('drives visibility from the store', async () => {
     render(<ModalHub modals={{ login: Login }}>x</ModalHub>);
     expect(screen.getByTestId('login')).toHaveTextContent('login-off');
 
@@ -46,5 +48,37 @@ describe('ModalHub provider', () => {
       await modalHub.hide('login');
     });
     expect(screen.getByTestId('login')).toHaveTextContent('login-off');
+  });
+
+  it('only re-renders the target modal (render isolation)', async () => {
+    let loginRenders = 0;
+    let toastRenders = 0;
+    const CountingLogin = () => {
+      loginRenders++;
+      return <Login />;
+    };
+    const CountingToast = () => {
+      toastRenders++;
+      return <Toast />;
+    };
+
+    render(
+      <ModalHub modals={{ login: CountingLogin }} modalsEager={{ toast: CountingToast }}>
+        x
+      </ModalHub>
+    );
+    const loginBefore = loginRenders;
+    const toastBefore = toastRenders;
+
+    await act(async () => {
+      await modalHub.show('login');
+    });
+    expect(loginRenders).toBeGreaterThan(loginBefore);
+    expect(toastRenders).toBe(toastBefore);
+
+    await act(async () => {
+      await modalHub.hide('login');
+    });
+    expect(toastRenders).toBe(toastBefore);
   });
 });
